@@ -1,5 +1,7 @@
 package app.apothecary.ui.shop
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.apothecary.container
+import app.apothecary.data.Fate
+import app.apothecary.data.Item
+import app.apothecary.data.Order
 import app.apothecary.domain.Glow
 import app.apothecary.domain.Regulars
 import app.apothecary.domain.Shop
@@ -20,52 +28,43 @@ import app.apothecary.domain.Words
 import app.apothecary.ui.LocalRu
 import app.apothecary.ui.Nav
 import app.apothecary.ui.Overlay
+import app.apothecary.ui.Tab
 import app.apothecary.ui.art.ShopScene
 import app.apothecary.ui.components.Btn
 import app.apothecary.ui.components.Card
 import app.apothecary.ui.components.IngredientRow
 import app.apothecary.ui.components.Kind
-import app.apothecary.ui.components.Note
 import app.apothecary.ui.components.Section
 import app.apothecary.ui.components.Tag
 import app.apothecary.ui.components.t
 import app.apothecary.ui.theme.C
+import app.apothecary.ui.theme.R8
 import app.apothecary.ui.theme.T
 
 @Composable
 fun ShopScreen(shop: Shop, hour: Int, nav: Nav) {
     val ru = LocalRu.current
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 90.dp)) {
+    val murky = shop.urgent.filter { shop.glow(it) == Glow.MURKY }
+    val urgent = shop.urgent.filter { shop.glow(it) == Glow.LAST || shop.glow(it) == Glow.SOON }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 96.dp)) {
         ShopScene(shop, hour, onFlask = { nav.go(Overlay.Ingredient(it.id)) }, onCauldron = { nav.go(Overlay.Brew()) })
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            val last = shop.food.filter { shop.glow(it) == Glow.LAST }
-            val soon = shop.food.filter { shop.glow(it) == Glow.SOON }
-            val murky = shop.food.filter { shop.glow(it) == Glow.MURKY }
-            Text(summary(shop.food.size, last.size, soon.size, murky.size, ru), style = T.Italic, modifier = Modifier.padding(top = 12.dp))
+            Text(summary(shop, ru), style = T.Italic, modifier = Modifier.padding(top = 12.dp))
+
+            if (murky.isNotEmpty()) {
+                Section(t("Помутнели", "Gone murky"))
+                for (i in murky) MurkyRow(shop, i, nav)
+            }
 
             val orders = if (shop.s.ordersDay == shop.today) shop.s.orders else emptyList()
             if (orders.isNotEmpty()) {
-                Section(t("Заказы на сегодня", "Today's orders"))
+                Section(t("Заказы на сегодня", "Today's orders"), t("за заказ +3 монеты", "+3 coins an order"))
                 val served = shop.served
-                for ((k, o) in orders.withIndex()) {
-                    val done = o.key() in served
-                    val need = Words.list(o.cats.map { Words.cat(it, ru) }, ru)
-                    val line = Regulars.line(o.who, ru, (shop.today + k).toInt())
-                    Note(
-                        if (done) (if (ru) "Спасибо! Зелье что надо." else "Thank you! Just what I needed.")
-                        else "$line " + (if (ru) "Сварите мне что-нибудь, где есть $need." else "Brew me something with $need."),
-                        Regulars.name(o.who, ru), edge = if (done) C.moss else C.copper,
-                    )
-                    if (!done) {
-                        val ids = shop.food.filter { it.cat in o.cats && (shop.left(it) ?: 99) in 0..2 }.map { it.id }
-                        Btn(t("Сварить для заказа", "Brew for the order"), { nav.go(Overlay.Brew(ids)) }, Modifier.fillMaxWidth(), kind = Kind.SOFT, small = true)
-                    }
-                }
+                for ((k, o) in orders.withIndex()) OrderCard(shop, o, o.key() in served, k, nav)
             }
 
-            val urgent = shop.urgent.filter { shop.glow(it) != Glow.BRIGHT }
             if (urgent.isNotEmpty()) {
-                Section(t("Теряют силу", "Losing strength"), t("на полки", "all shelves"), onNote = { nav.tab(app.apothecary.ui.Tab.SHELVES) })
+                Section(t("Теряют силу", "Losing strength"), t("все полки", "all shelves"), onNote = { nav.tab(Tab.SHELVES) })
                 for (i in urgent) IngredientRow(shop, i, { nav.go(Overlay.Ingredient(i.id)) })
             }
 
@@ -81,17 +80,62 @@ fun ShopScreen(shop: Shop, hour: Int, nav: Nav) {
                 }
             }
 
-            Btn(t("К котлу", "To the cauldron"), { nav.go(Overlay.Brew()) }, Modifier.fillMaxWidth().padding(top = 6.dp))
-            if (shop.stock.isEmpty()) Text(t("Полки пусты. Нажмите «+», чтобы поставить первый ингредиент: что лежит в холодильнике, в шкафу, в морозилке или в аптечке.",
-                "The shelves are empty. Tap “+” to put up the first ingredient: whatever is in the fridge, the cupboard, the freezer or the medicine box."), style = T.Muted)
+            if (shop.stock.isEmpty()) Card {
+                Text(t("Полки пусты", "The shelves are empty"), style = T.Name)
+                Text(t("Нажмите «+» и поставьте первый ингредиент: что лежит в холодильнике, в шкафу, в морозилке или в аптечке. Начните с того, что скоро испортится.",
+                    "Tap “+” and put up the first ingredient: whatever is in the fridge, the cupboard, the freezer or the medicine box. Start with what spoils soonest."), style = T.Muted)
+            } else Btn(t("К котлу", "To the cauldron"), { nav.go(Overlay.Brew()) }, Modifier.fillMaxWidth().padding(top = 6.dp))
         }
     }
 }
 
-private fun summary(total: Int, last: Int, soon: Int, murky: Int, ru: Boolean): String = when {
-    total == 0 -> if (ru) "В лавке тихо, полки ждут." else "The shop is quiet; the shelves are waiting."
-    murky > 0 -> if (ru) "На полках есть помутневшие колбы: ${murky}. Загляните, пока не поздно для остальных." else "There are murky bottles on the shelves: $murky. Check on the rest before it's too late."
-    last > 0 -> if (ru) "Сегодня последний день у $last ${Words.plural(last.toLong(), "ингредиента", "ингредиентов", "ингредиентов")}. Котёл ждёт." else "$last ${if (last == 1) "ingredient is" else "ingredients are"} on their last day. The cauldron is waiting."
-    soon > 0 -> if (ru) "Скоро ослабнут: $soon. Самое время подумать об ужине." else "Weakening soon: $soon. A good time to think about supper."
-    else -> if (ru) "Все колбы светятся ровно. Можно спокойно варить." else "Every bottle glows steadily. Brew at leisure."
+/** A spoiled ingredient with the two honest answers right on the row. */
+@Composable
+private fun MurkyRow(shop: Shop, i: Item, nav: Nav) {
+    val ru = LocalRu.current
+    val c = LocalContext.current.container
+    Column(Modifier.fillMaxWidth().clip(R8.Md).background(C.surface).border(1.dp, C.rose.copy(alpha = .35f), R8.Md)) {
+        IngredientRow(shop, i, { nav.go(Overlay.Ingredient(i.id)) })
+        Row(Modifier.padding(start = 12.dp, end = 12.dp, bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Btn(t("Вылить", "Pour out"), { c.write { clerk.close(i, Fate.TOSSED, shop.today) }; nav.toast(if (ru) "Вылито" else "Poured out") }, Modifier.weight(1f), kind = Kind.DANGER, small = true)
+            Btn(t("Всё-таки съели", "Ate it anyway"), { c.write { clerk.close(i, Fate.EATEN, shop.today) } }, Modifier.weight(1f), kind = Kind.SOFT, small = true)
+        }
+    }
+}
+
+/** A customer's note: who, what they need, which of your bottles fit, and the brew button on the note itself. */
+@Composable
+private fun OrderCard(shop: Shop, o: Order, done: Boolean, k: Int, nav: Nav) {
+    val ru = LocalRu.current
+    val edge = if (done) C.moss else C.copper
+    val fit = shop.food.filter { it.cat in o.cats && (shop.left(it) ?: 99) in 0..2 }
+    Column(Modifier.fillMaxWidth().clip(R8.Md).background(C.paper).border(2.dp, edge, R8.Md).padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(Regulars.name(o.who, ru).uppercase(), style = T.Eyebrow.copy(color = edge))
+        if (done) Text(if (ru) "Спасибо! Зелье что надо." else "Thank you! Just what I needed.", style = T.Say)
+        else {
+            val need = Words.list(o.cats.map { Words.cat(it, ru) }, ru)
+            Text(Regulars.line(o.who, ru, (shop.today + k).toInt()) + " " + (if (ru) "Сварите мне что-нибудь, где есть $need." else "Brew me something with $need."), style = T.Say)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                Text(if (fit.isEmpty()) "" else (if (ru) "Подойдут: " else "Will do: ") + fit.joinToString(", ") { it.name.lowercase() }, style = T.Small.copy(color = C.paperMuted), modifier = Modifier.weight(1f).padding(end = 8.dp))
+                if (fit.isNotEmpty()) Btn(t("Сварить", "Brew"), { nav.go(Overlay.Brew(fit.map { it.id })) }, kind = Kind.COPPER, small = true)
+            }
+        }
+    }
+}
+
+/** One plain sentence about the shelves, naming what matters. */
+private fun summary(shop: Shop, ru: Boolean): String {
+    val food = shop.food
+    if (food.isEmpty()) return if (ru) "В лавке тихо, полки ждут." else "The shop is quiet; the shelves are waiting."
+    fun names(g: Glow) = food.filter { shop.glow(it) == g }.map { it.name.lowercase() }
+    val murky = names(Glow.MURKY); val last = names(Glow.LAST)
+    val tomorrow = food.filter { shop.left(it) == 1L }.map { it.name.lowercase() }
+    val parts = buildList {
+        if (last.isNotEmpty()) add((if (ru) "Сегодня последний день: " else "Last day today: ") + Words.list(last, ru) + ".")
+        if (tomorrow.isNotEmpty()) add((if (ru) "Завтра: " else "Tomorrow: ") + Words.list(tomorrow.take(4), ru) + ".")
+        if (murky.isNotEmpty()) add(if (ru) "Помутнело: ${Words.list(murky, true)}." else "Gone murky: ${Words.list(murky, false)}.")
+    }
+    return parts.joinToString(" ").replaceFirstChar { it.uppercase() }.ifEmpty {
+        if (ru) "Все колбы светятся ровно. Можно спокойно варить." else "Every bottle glows steadily. Brew at leisure."
+    }
 }

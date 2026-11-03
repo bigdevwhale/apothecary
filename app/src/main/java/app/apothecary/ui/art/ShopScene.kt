@@ -68,7 +68,7 @@ fun ShopScene(shop: Shop, hour: Int, onFlask: (Item) -> Unit, onCauldron: () -> 
                     flask(shapeOf(it.name), fx, fy, fw, fh, C.cat(it.cat), shop.potency(it), glow, tick, it.id.toInt())
                     hits += Rect(fx, fy, fx + fw, sy) to it
                 } else if (row == 1 && k == 4 && Decor.BOOKS.name in decor) books(fx - slot * .1f, sy, slot * 1.2f, fh * .8f)
-                else flask((idx * 3) % 4, fx + fw * .15f, fy + fh * .3f, fw * .7f, fh * .7f, C.glass.copy(alpha = .3f), 0f, Glow.MURKY, tick, idx)
+                else flask((idx * 3) % 4, fx + fw * .15f, fy + fh * .3f, fw * .7f, fh * .7f, C.glass.copy(alpha = .3f), -1f, Glow.MURKY, tick, idx)
             }
             plank(left - w * .02f, sy, right - left + w * .04f, h * .035f)
         }

@@ -97,6 +97,7 @@ fun DrawScope.flask(shape: Int, x: Float, y: Float, w: Float, h: Float, color: C
     }
     // A spoiled bottle still holds its murky dregs; one on its last day keeps a thin layer.
     val lv = when {
+        level < 0f -> 0f // an empty bottle: nothing in it yet
         murky -> maxOf(level, .35f)
         glow == Glow.LAST -> maxOf(level, .14f)
         level <= 0f -> 0f

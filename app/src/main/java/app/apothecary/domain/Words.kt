@@ -37,10 +37,10 @@ object Words {
 
     /** What the place is in an ordinary kitchen. */
     fun placeHint(p: Place, ru: Boolean) = when (p) {
-        Place.CELLAR -> if (ru) "холодильник" else "the fridge"
-        Place.PANTRY -> if (ru) "шкаф с запасами" else "the cupboard"
-        Place.ICE -> if (ru) "морозилка" else "the freezer"
-        Place.CABINET -> if (ru) "аптечка" else "the medicine box"
+        Place.CELLAR -> if (ru) "холодильник" else "fridge"
+        Place.PANTRY -> if (ru) "шкаф" else "cupboard"
+        Place.ICE -> if (ru) "морозилка" else "freezer"
+        Place.CABINET -> if (ru) "аптечка" else "medicine box"
     }
 
     fun need(n: Need, ru: Boolean) = when (n) {
@@ -103,6 +103,7 @@ object Words {
         n == null -> "∞"
         n < 0 -> "−${-n}"
         n == 0L -> if (ru) "сегодня" else "today"
+        n == 1L -> if (ru) "завтра" else "tomorrow"
         n < 60 -> if (ru) "$n д" else "${n}d"
         n < 730 -> if (ru) "${n / 30} мес" else "${n / 30}mo"
         else -> if (ru) "${n / 365} г" else "${n / 365}y"

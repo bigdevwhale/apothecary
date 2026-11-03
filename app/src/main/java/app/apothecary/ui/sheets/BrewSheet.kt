@@ -87,7 +87,16 @@ fun BrewSheet(shop: Shop, chosen0: List<Long>, nav: Nav) {
         }
         if (food.isEmpty()) Text(t("На полках нет еды. Сначала поставьте что-нибудь.", "There's no food on the shelves. Put something up first."), style = T.Muted)
         Section(t("Ингредиенты", "Ingredients"), if (chosen.isEmpty()) null else if (ru) "выбрано ${chosen.size}" else "${chosen.size} chosen")
-        for (i in food) IngredientRow(shop, i, { chosen = if (i.id in chosen) chosen - i.id else chosen + i.id }, selected = i.id in chosen)
+        val groups = listOf(
+            t("Срочно", "Urgent") to food.filter { shop.glow(it) != Glow.BRIGHT && it.place != app.apothecary.data.Place.ICE },
+            t("На полках", "On the shelves") to food.filter { shop.glow(it) == Glow.BRIGHT && it.place != app.apothecary.data.Place.ICE },
+            t("В ледяном ларе", "In the ice chest") to food.filter { it.place == app.apothecary.data.Place.ICE },
+        )
+        for ((title, list) in groups) {
+            if (list.isEmpty()) continue
+            Text(title, style = T.Small, modifier = Modifier.padding(top = 4.dp))
+            for (i in list) IngredientRow(shop, i, { chosen = if (i.id in chosen) chosen - i.id else chosen + i.id }, selected = i.id in chosen)
+        }
     }
 }
 

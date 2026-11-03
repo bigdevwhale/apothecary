@@ -1,5 +1,11 @@
 package app.apothecary.ui.shelves
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,10 +44,7 @@ fun ShelvesScreen(shop: Shop, nav: Nav) {
     val ru = LocalRu.current
     var place by rememberSaveable { mutableStateOf(Place.CELLAR) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Flow {
-            for (p in Place.entries) Chip("${Words.place(p, ru)} · ${shop.on(p).size}", p == place, { place = p })
-        }
-        Text(t("Это ", "This is ") + Words.placeHint(place, ru) + ".", style = T.Small)
+        PlaceTabs(shop, place) { place = it }
         if (place == Place.CABINET) Cabinet(shop)
         val list = shop.on(place)
         if (place == Place.CABINET) {
@@ -81,4 +84,34 @@ private fun empty(p: Place, ru: Boolean) = when (p) {
     Place.PANTRY -> if (ru) "Кладовая пуста. Крупы, макароны, хлеб, банки и соусы." else "The pantry is empty. Grains, pasta, bread, jars and sauces."
     Place.ICE -> if (ru) "В ларе ничего нет. Положите сюда то, что не успеваете съесть: срок замрёт." else "Nothing in the ice chest. Put here what you can't eat in time: its clock freezes."
     Place.CABINET -> if (ru) "Шкаф пуст. Добавьте лекарства и витамины: гильдия проверит, всё ли на месте." else "The cabinet is empty. Add medicines and vitamins: the guild will check it's all there."
+}
+
+/** Four doors of the shop: the name, how many bottles, and what it is in an ordinary kitchen. */
+@Composable
+private fun PlaceTabs(shop: Shop, place: Place, onPick: (Place) -> Unit) {
+    val ru = LocalRu.current
+    Row(Modifier.fillMaxWidth().clip(app.apothecary.ui.theme.R8.Lg).background(C.surface).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        for (p in Place.entries) {
+            val on = p == place
+            val n = if (p == Place.CABINET) shop.cabinet.size else shop.on(p).count { it.cat.food }
+            val alarm = (if (p == Place.CABINET) shop.cabinet else shop.on(p).filter { it.cat.food }).any { shop.glow(it) != app.apothecary.domain.Glow.BRIGHT }
+            Column(
+                Modifier.weight(1f).clip(app.apothecary.ui.theme.R8.Md).background(if (on) C.amber else C.surface).clickable { onPick(p) }.padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(short(p, ru), style = T.Strong.copy(color = if (on) C.onAmber else C.ink), maxLines = 1)
+                    if (alarm) Box(Modifier.padding(start = 4.dp).size(6.dp).clip(CircleShape).background(if (on) C.onAmber else C.copper))
+                }
+                Text("${Words.placeHint(p, ru)} · $n", style = T.Small.copy(color = if (on) C.onAmber.copy(alpha = .7f) else C.faint, fontSize = T.Small.fontSize * .92f), maxLines = 1)
+            }
+        }
+    }
+}
+
+private fun short(p: Place, ru: Boolean) = when (p) {
+    Place.CELLAR -> if (ru) "Погребок" else "Cellar"
+    Place.PANTRY -> if (ru) "Кладовая" else "Pantry"
+    Place.ICE -> if (ru) "Ларь" else "Ice chest"
+    Place.CABINET -> if (ru) "Шкаф" else "Cabinet"
 }

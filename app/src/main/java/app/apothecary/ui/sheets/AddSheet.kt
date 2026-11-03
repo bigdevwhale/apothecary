@@ -1,9 +1,15 @@
 package app.apothecary.ui.sheets
 
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import app.apothecary.ui.theme.R8
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,8 +74,11 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
     var jar by remember { mutableIntStateOf(edit?.jar ?: 0) }
     var picking by remember { mutableStateOf<String?>(null) }
     var kind by remember { mutableStateOf<Kind?>(null) }
+    var details by remember { mutableStateOf(edit != null) }
 
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     fun pick(k: Kind) {
+        focusManager.clearFocus()
         kind = k
         name = k.name(ru)
         cat = k.cat; catSet = true
@@ -110,10 +119,22 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
     }
     Sheet(onDismiss = nav::close, bottom = save) {
         Text(if (edit == null) t("На полку", "Onto the shelf") else t("Изменить", "Edit"), style = T.Title)
-        Field(name, { name = it; kind = null }, t("Что это? Молоко, гречка, ибупрофен…", "What is it? Milk, rice, ibuprofen…"))
+        val focus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { if (edit == null) runCatching { focus.requestFocus() } }
+        Field(name, { name = it; kind = null }, t("Что это? Молоко, гречка, ибупрофен…", "What is it? Milk, rice, ibuprofen…"), Modifier.focusRequester(focus))
         val found = remember(name) { if (kind == null) Lore.find(name, ru) else emptyList() }
         if (found.isNotEmpty()) Flow { for (k in found) Chip(k.name(ru), false, { pick(k) }) }
 
+        if (kind != null && !details) {
+            // Picked from the guide: everything is filled in, so show it in one line and keep the chips out of the way.
+            Row(Modifier.fillMaxWidth().clip(R8.Md).background(C.surface2).padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(listOfNotNull(Words.cat(cat, ru), Words.place(place, ru).lowercase(),
+                    openDays.toIntOrNull()?.let { if (ru) "открытым ${Words.days(it.toLong(), true)}" else "${Words.days(it.toLong(), false)} open" }).joinToString(" · "),
+                    style = T.Body, modifier = Modifier.weight(1f))
+                Chip(t("изменить", "change"), false, { details = true })
+            }
+        }
+        if (kind == null || details) {
         Section(t("Эссенция", "Essence"))
         Flow {
             for (x in Cat.entries) Chip(Words.cat(x, ru), x == cat, {
@@ -127,6 +148,7 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
 
         Section(t("Где хранится", "Kept in"))
         Flow { for (p in Place.entries) Chip(Words.place(p, ru), p == place, { place = p }) }
+        }
 
         Section(t("Срок на упаковке", "Date on the package"), if (noDate) t("без срока", "none") else Words.date(printed, ru, year = printed - today > 300))
         Flow {
@@ -145,7 +167,8 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
             Chip(t("другой день…", "another day…"), bought < today - 1, { picking = "bought" })
         }
 
-        if (place != Place.ICE) {
+        // Opening only matters for things that keep a shorter time once open (milk, jars); chicken doesn't ask.
+        if (place != Place.ICE && (kind == null || kind?.open != null || details || opened != null)) {
             Section(t("Вскрыто", "Opened"), opened?.let { Words.date(it, ru) })
             Flow {
                 Chip(t("запечатано", "sealed"), opened == null, { opened = null })

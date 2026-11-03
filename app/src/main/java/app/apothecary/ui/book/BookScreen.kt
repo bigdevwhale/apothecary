@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.drawText
 import app.apothecary.domain.Book
 import app.apothecary.domain.Glow
 import app.apothecary.domain.Potion
@@ -80,7 +81,7 @@ private fun Recipes(shop: Shop) {
                 ) {
                     val col = p.color()
                     Box(Modifier.height(66.dp), contentAlignment = Alignment.Center) {
-                        Flask(if (has) col else C.glass.copy(alpha = .4f), if (has) .85f else 0f, if (has) Glow.BRIGHT else Glow.MURKY, 62.dp, p.shape, p.key.hashCode())
+                        Flask(if (has) col else C.glass.copy(alpha = .4f), if (has) .85f else -1f, if (has) Glow.BRIGHT else Glow.MURKY, 62.dp, p.shape, p.key.hashCode())
                     }
                     Text(if (has) p.name(ru) else "???", style = T.Label.copy(color = if (has) C.ink else C.faint), textAlign = TextAlign.Center, maxLines = 3)
                     val hint = if (p.rare) Book.rareHint(p.key, ru) else Words.list(p.needs.map { Words.cat(it, ru) }, ru)
@@ -116,6 +117,8 @@ private fun LedgerPage(shop: Shop) {
         Stat(Words.money(l.tossedMoney, ru), t("ушло в помои", "down the drain"), Modifier.weight(1f), C.rose)
         Stat("${shop.clean}", t("дней без потерь", "days without loss"), Modifier.weight(1f), C.moss)
     }
+    Section(t("Восемь недель", "Eight weeks"))
+    Weeks(shop)
     if (l.byCat.isNotEmpty()) {
         Section(t("Что пропадает", "What goes to waste"))
         val max = l.byCat.maxOf { it.second }
@@ -131,12 +134,21 @@ private fun LedgerPage(shop: Shop) {
     }
     if (l.worst.isNotEmpty()) {
         Section(t("Чаще всего вылито", "Most often poured out"))
-        Text(l.worst.joinToString(" · ") { "${it.first} ×${it.second}" }, style = T.Muted)
+        Flow { for ((name, n) in l.worst) app.apothecary.ui.components.Tag("$name ×$n", C.rose.copy(alpha = .2f), ink = C.rose) }
         Text(t("Может, покупать их поменьше или сразу класть в ларь?", "Maybe buy less of these, or put them straight in the ice chest?"), style = T.Small)
     }
     if (l.potions.isNotEmpty()) {
         Section(t("Любимые зелья", "Favourite potions"))
-        Text(l.potions.take(5).joinToString(" · ") { "${Book.potion(it.first).name(ru)} ×${it.second}" }, style = T.Muted)
+        Card(padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)) {
+            for ((key, n) in l.potions.take(5)) {
+                val p = Book.potion(key)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(vertical = 2.dp)) {
+                    Flask(p.color(), .85f, Glow.BRIGHT, 34.dp, p.shape, key.hashCode())
+                    Text(p.name(ru), style = T.Name, modifier = Modifier.weight(1f))
+                    Text("×$n", style = T.Strong.copy(color = C.amber))
+                }
+            }
+        }
     }
 }
 
@@ -181,4 +193,41 @@ private fun Guild(shop: Shop) {
     }
     Text(t("Потери — это то, что вылито, от всего, что ушло с полок. Сваренное, отданное и замороженное потерей не считается.",
         "Loss is what was poured out, out of everything that left the shelves. Brewed, given away and frozen don't count as loss."), style = T.Small)
+}
+
+/** Brewed (amber, up) against poured out (red, down), week by week, this week on the right. */
+@Composable
+private fun Weeks(shop: Shop) {
+    val ru = LocalRu.current
+    val weeks = (7 downTo 0).map { w ->
+        val to = shop.today - w * 7L; val from = to - 6
+        shop.brews.count { it.day in from..to } to shop.items.count { it.fate == app.apothecary.data.Fate.TOSSED && it.cat.food && (it.closed ?: -1) in from..to }
+    }
+    val max = weeks.maxOf { maxOf(it.first, it.second * 2) }.coerceAtLeast(1)
+    Card {
+        val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+        val label = T.Small.copy(color = C.muted)
+        androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(110.dp)) {
+            val slot = size.width / weeks.size
+            val top = 16.dp.toPx()
+            val mid = size.height * .8f
+            drawLine(C.line, androidx.compose.ui.geometry.Offset(0f, mid), androidx.compose.ui.geometry.Offset(size.width, mid), 1.dp.toPx())
+            for ((k, w) in weeks.withIndex()) {
+                val x = slot * k + slot * .22f; val bw = slot * .56f
+                val up = (mid - top) * w.first / max
+                if (w.first > 0) {
+                    val m = measurer.measure("${w.first}", label)
+                    drawText(m, topLeft = androidx.compose.ui.geometry.Offset(x + bw / 2 - m.size.width / 2, mid - up - m.size.height - 2.dp.toPx()))
+                }
+                drawRoundRect(if (k == weeks.lastIndex) C.amber else C.amber.copy(alpha = .55f), androidx.compose.ui.geometry.Offset(x, mid - up), androidx.compose.ui.geometry.Size(bw, up), androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()))
+                val down = (size.height - mid) * (w.second * 2f / max).coerceAtMost(1f)
+                if (w.second > 0) drawRoundRect(C.rose, androidx.compose.ui.geometry.Offset(x, mid + 2.dp.toPx()), androidx.compose.ui.geometry.Size(bw, down), androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()))
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+            Text(t("8 недель назад", "8 weeks ago"), style = T.Small, modifier = Modifier.weight(1f))
+            Text(t("эта неделя", "this week"), style = T.Small)
+        }
+        Text(if (ru) "Сварено за неделю: ${weeks.last().first}, вылито: ${weeks.last().second}" else "This week: ${weeks.last().first} brewed, ${weeks.last().second} poured out", style = T.Muted, modifier = Modifier.padding(top = 4.dp))
+    }
 }
