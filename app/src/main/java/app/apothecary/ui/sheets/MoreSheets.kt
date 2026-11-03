@@ -77,7 +77,18 @@ fun AuditSheet(shop: Shop, nav: Nav) {
     val ru = LocalRu.current
     val c = LocalContext.current.container
     var marks by remember { mutableStateOf(mapOf<Long, Seen>()) }
-    Sheet(onDismiss = nav::close) {
+    Sheet(onDismiss = nav::close, bottom = {
+        Btn(t("Ревизия окончена", "Audit done"), {
+            val today = shop.today
+            val done = marks.filterValues { it != Seen.HERE }
+            c.write {
+                for ((id, m) in done) shop.item(id)?.let { clerk.close(it, if (m == Seen.EATEN) Fate.EATEN else Fate.TOSSED, today) }
+                settings.update { it.copy(audit = today) }
+            }
+            nav.toast(if (done.isEmpty()) (if (ru) "Всё на месте" else "Everything's in place") else (if (ru) "Снято с полок: ${done.size}" else "Taken off the shelves: ${done.size}"))
+            nav.close()
+        }, Modifier.fillMaxWidth())
+    }) {
         Text(t("Ночная ревизия", "Night audit"), style = T.Title)
         Text(t("Нажмите на то, чего уже нет: один раз — съели, второй — вылили, третий — снова на месте.", "Tap what's gone: once for eaten, twice for poured out, a third time to put it back."), style = T.Muted)
         for (p in Place.entries) {
@@ -94,15 +105,5 @@ fun AuditSheet(shop: Shop, nav: Nav) {
                 }
             }
         }
-        Btn(t("Ревизия окончена", "Audit done"), {
-            val today = shop.today
-            val done = marks.filterValues { it != Seen.HERE }
-            c.write {
-                for ((id, m) in done) shop.item(id)?.let { clerk.close(it, if (m == Seen.EATEN) Fate.EATEN else Fate.TOSSED, today) }
-                settings.update { it.copy(audit = today) }
-            }
-            nav.toast(if (done.isEmpty()) (if (ru) "Всё на месте" else "Everything's in place") else (if (ru) "Снято с полок: ${done.size}" else "Taken off the shelves: ${done.size}"))
-            nav.close()
-        }, Modifier.fillMaxWidth())
     }
 }

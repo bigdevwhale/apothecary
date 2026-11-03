@@ -119,7 +119,8 @@ fun Field(value: String, onChange: (String) -> Unit, hint: String, modifier: Mod
 
 /** A sheet from the bottom over a dim layer; tap outside, swipe down or back closes it. */
 @Composable
-fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+/** [bottom] stays pinned under the scrolling content: the sheet's main button. */
+fun Sheet(onDismiss: () -> Unit, bottom: (@Composable () -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
     BackHandler(onBack = onDismiss)
     val close = t("Закрыть", "Close")
     Box(Modifier.fillMaxSize().background(Color(0xC00A0604)).clickable(remember { MutableInteractionSource() }, null, onClick = onDismiss).imePadding(), contentAlignment = Alignment.BottomCenter) {
@@ -140,7 +141,8 @@ fun Sheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
                     }
                 }
             }
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = if (bottom == null) 24.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+            if (bottom != null) Box(Modifier.fillMaxWidth().background(C.surface).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 16.dp)) { bottom() }
         }
     }
 }

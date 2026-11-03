@@ -83,7 +83,32 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
 
     LaunchedEffect(cat) { if (cat == Cat.LEFTOVER && jar == 0) jar = c.clerk.nextJar() }
 
-    Sheet(onDismiss = nav::close) {
+    val save: @Composable () -> Unit = {
+        Btn(if (edit == null) t("Поставить на полку", "Put on the shelf") else t("Сохранить", "Save"), {
+            val n = name.trim()
+            if (n.isEmpty()) { nav.toast(if (ru) "Как называется?" else "What is it called?"); return@Btn }
+            val base = edit ?: Item(name = n, cat = cat, place = place, bought = bought)
+            val item = base.copy(
+                name = n, cat = cat, place = place, bought = bought,
+                printed = if (noDate) null else printed,
+                opened = if (place == Place.ICE) null else opened,
+                openDays = openDays.toIntOrNull(),
+                // Bought frozen (dumplings, ice cream) keeps its printed date; anything else put in the chest starts the ice clock.
+                frozen = if (place == Place.ICE) (base.frozen ?: if (Lore.exact(n)?.place == Place.ICE) null else today) else null,
+                iceDays = if (place == Place.ICE) (iceDays ?: Lore.exact(n)?.ice) else base.iceDays,
+                price = (price.toIntOrNull() ?: 0) * 100,
+                jar = if (cat == Cat.LEFTOVER) jar else 0,
+                need = if (cat == Cat.MEDS || cat == Cat.VITAMIN || place == Place.CABINET) need else null,
+                perDay = perDay.toIntOrNull() ?: 0,
+                left = count.toIntOrNull() ?: 0,
+                courseFrom = if (perDay.toIntOrNull() != null && count.toIntOrNull() != null) (if (edit?.left == count.toIntOrNull() && edit?.perDay == perDay.toIntOrNull()) edit?.courseFrom ?: today else today) else null,
+            )
+            c.write { if (edit == null) clerk.add(item) else clerk.save(item) }
+            nav.toast(if (edit == null) (if (ru) "«$n» на полке" else "“$n” is on the shelf") else (if (ru) "Сохранено" else "Saved"))
+            if (edit != null) nav.go(Overlay.Ingredient(edit.id)) else nav.close()
+        }, Modifier.fillMaxWidth())
+    }
+    Sheet(onDismiss = nav::close, bottom = save) {
         Text(if (edit == null) t("На полку", "Onto the shelf") else t("Изменить", "Edit"), style = T.Title)
         Field(name, { name = it; kind = null }, t("Что это? Молоко, гречка, ибупрофен…", "What is it? Milk, rice, ibuprofen…"))
         val found = remember(name) { if (kind == null) Lore.find(name, ru) else emptyList() }
@@ -157,29 +182,6 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
             t("Склянка", "Jar"),
         )
 
-        Btn(if (edit == null) t("Поставить на полку", "Put on the shelf") else t("Сохранить", "Save"), {
-            val n = name.trim()
-            if (n.isEmpty()) { nav.toast(if (ru) "Как называется?" else "What is it called?"); return@Btn }
-            val base = edit ?: Item(name = n, cat = cat, place = place, bought = bought)
-            val item = base.copy(
-                name = n, cat = cat, place = place, bought = bought,
-                printed = if (noDate) null else printed,
-                opened = if (place == Place.ICE) null else opened,
-                openDays = openDays.toIntOrNull(),
-                // Bought frozen (dumplings, ice cream) keeps its printed date; anything else put in the chest starts the ice clock.
-                frozen = if (place == Place.ICE) (base.frozen ?: if (Lore.exact(n)?.place == Place.ICE) null else today) else null,
-                iceDays = if (place == Place.ICE) (iceDays ?: Lore.exact(n)?.ice) else base.iceDays,
-                price = (price.toIntOrNull() ?: 0) * 100,
-                jar = if (cat == Cat.LEFTOVER) jar else 0,
-                need = if (cat == Cat.MEDS || cat == Cat.VITAMIN || place == Place.CABINET) need else null,
-                perDay = perDay.toIntOrNull() ?: 0,
-                left = count.toIntOrNull() ?: 0,
-                courseFrom = if (perDay.toIntOrNull() != null && count.toIntOrNull() != null) (if (edit?.left == count.toIntOrNull() && edit?.perDay == perDay.toIntOrNull()) edit?.courseFrom ?: today else today) else null,
-            )
-            c.write { if (edit == null) clerk.add(item) else clerk.save(item) }
-            nav.toast(if (edit == null) (if (ru) "«$n» на полке" else "“$n” is on the shelf") else (if (ru) "Сохранено" else "Saved"))
-            if (edit != null) nav.go(Overlay.Ingredient(edit.id)) else nav.close()
-        }, Modifier.fillMaxWidth())
     }
 
     picking?.let { what ->

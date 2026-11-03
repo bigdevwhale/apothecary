@@ -59,7 +59,14 @@ fun BrewSheet(shop: Shop, chosen0: List<Long>, nav: Nav) {
     val scope = rememberCoroutineScope()
     var chosen by remember { mutableStateOf(chosen0.toSet()) }
     val food = shop.urgent
-    Sheet(onDismiss = nav::close) {
+    Sheet(onDismiss = nav::close, bottom = {
+        Btn(t("Сварить", "Brew"), {
+            scope.launch {
+                val b = c.clerk.brew(chosen.toList(), shop.today) ?: return@launch
+                nav.go(Overlay.Reveal(b))
+            }
+        }, Modifier.fillMaxWidth(), enabled = chosen.isNotEmpty())
+    }) {
         Text(t("Котёл", "The cauldron"), style = T.Title)
         Text(t("Отметьте, что пошло в еду. Всё отмеченное уйдёт с полок как сваренное.", "Tick what went into the meal. Everything ticked leaves the shelves as brewed."), style = T.Muted)
         val used = food.filter { it.id in chosen }
@@ -81,12 +88,6 @@ fun BrewSheet(shop: Shop, chosen0: List<Long>, nav: Nav) {
         if (food.isEmpty()) Text(t("На полках нет еды. Сначала поставьте что-нибудь.", "There's no food on the shelves. Put something up first."), style = T.Muted)
         Section(t("Ингредиенты", "Ingredients"), if (chosen.isEmpty()) null else if (ru) "выбрано ${chosen.size}" else "${chosen.size} chosen")
         for (i in food) IngredientRow(shop, i, { chosen = if (i.id in chosen) chosen - i.id else chosen + i.id }, selected = i.id in chosen)
-        Btn(t("Сварить", "Brew"), {
-            scope.launch {
-                val b = c.clerk.brew(chosen.toList(), shop.today) ?: return@launch
-                nav.go(Overlay.Reveal(b))
-            }
-        }, Modifier.fillMaxWidth().padding(top = 4.dp), enabled = chosen.isNotEmpty())
     }
 }
 
@@ -106,7 +107,7 @@ fun RevealSheet(shop: Shop, b: Brewed, nav: Nav) {
         Text(b.brew.names.lines().joinToString(", "), style = T.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) { Tag("+${b.brew.coins} " + (if (ru) Words.plural(b.brew.coins.toLong(), "монета", "монеты", "монет") else "coins"), C.amber) }
         if (b.brew.rescued > 0) Text(if (ru) "Спасено в последний момент: ${b.brew.rescued}" else "Saved at the last moment: ${b.brew.rescued}", style = T.Body.copy(color = C.moss), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-        for (o in b.served) Note(Regulars.line(o.who, ru, b.brew.id.toInt()) + " " + (if (ru) "Спасибо, это то, что нужно!" else "Thank you, just what I needed!"), Regulars.name(o.who, ru), edge = C.moss)
+        for (o in b.served) Note(if (ru) "Спасибо, это то, что нужно!" else "Thank you, just what I needed!", Regulars.name(o.who, ru), edge = C.moss)
         Btn(t("Поставить на полку", "Put it on the shelf"), nav::close, Modifier.fillMaxWidth())
     }
 }
