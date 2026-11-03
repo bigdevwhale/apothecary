@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Зельевар</string>
+    <string name="channel_bell">Утренний колокольчик</string>
+    <string name="channel_bell_desc">Что теряет силу сегодня и завтра</string>
+    <string name="bell_title">Колокольчик над дверью</string>
+    <string name="bell_title_today">Последний день на полке</string>
+</resources>

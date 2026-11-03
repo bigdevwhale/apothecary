@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- glow -->
+    <path android:pathData="M24,66a30,30 0,1 1,60 0a30,30 0,1 1,-60 0z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="54" android:centerY="66" android:gradientRadius="30"
+                android:startColor="#66F0B45A" android:endColor="#00F0B45A" />
+        </aapt:attr>
+    </path>
+    <!-- glass -->
+    <path android:fillColor="#33E8F1EE" android:strokeColor="#FFE9D9B8" android:strokeWidth="2.2"
+        android:pathData="M49,32 L59,32 L59,47 A20,20 0,1 1,49 47 Z" />
+    <!-- potion -->
+    <path android:pathData="M36.2,64 L71.8,64 A18,18 0,1 1,36.2 64 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="54" android:startY="62" android:endX="54" android:endY="85"
+                android:startColor="#FFFFD27A" android:endColor="#FFD8672E" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#88FFF4D6" android:pathData="M39.8,70a2.2,2.2 0,1 1,4.4 0a2.2,2.2 0,1 1,-4.4 0z" />
+    <path android:fillColor="#88FFF4D6" android:pathData="M58.4,74a1.6,1.6 0,1 1,3.2 0a1.6,1.6 0,1 1,-3.2 0z" />
+    <path android:fillColor="#AAFFF4D6" android:pathData="M51.7,58a1.3,1.3 0,1 1,2.6 0a1.3,1.3 0,1 1,-2.6 0z" />
+    <!-- shine -->
+    <path android:strokeColor="#77FFFFFF" android:strokeWidth="2" android:strokeLineCap="round"
+        android:pathData="M41,57 A15,15 0,0 0,38 66" />
+    <!-- cork -->
+    <path android:fillColor="#FFB07A48" android:pathData="M47.5,25 L60.5,25 L59.5,32 L48.5,32 Z" />
+    <!-- sparkles -->
+    <path android:fillColor="#FFFFE7A8" android:pathData="M74,30 L75.2,34 L79,35.2 L75.2,36.4 L74,40.4 L72.8,36.4 L69,35.2 L72.8,34 Z" />
+    <path android:fillColor="#CCFFE7A8" android:pathData="M34,38 L34.8,40.5 L37.3,41.3 L34.8,42.1 L34,44.6 L33.2,42.1 L30.7,41.3 L33.2,40.5 Z" />
+</vector>

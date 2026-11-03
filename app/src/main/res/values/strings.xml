@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Apothecary</string>
+    <string name="channel_bell">Morning bell</string>
+    <string name="channel_bell_desc">What loses its strength today and tomorrow</string>
+    <string name="bell_title">The bell over the door</string>
+    <string name="bell_title_today">Last day on the shelf</string>
+</resources>
