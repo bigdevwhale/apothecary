@@ -193,7 +193,8 @@ private fun DrawScope.cauldron(cx: Float, top: Float, r: Float, brew: Color, cop
 
 private fun DrawScope.candle(x: Float, base: Float, w: Float, h: Float, tick: Int, seed: Int) {
     val top = base - h
-    val f = .85f + .15f * sin((tick + seed) * .9f) + .05f * sin((tick + seed) * 2.3f)
+    // A slow, soft breathing of the flame, not a flicker.
+    val f = .95f + .035f * sin((tick + seed) * .11f) + .015f * sin((tick + seed) * .29f)
     drawCircle(Brush.radialGradient(listOf(Color(0x66FFC46A), Color(0x00FFC46A)), Offset(x, top - w), w * 6 * f), w * 6 * f, Offset(x, top - w))
     drawRoundRect(Color(0xFFF2E3C2), Offset(x - w / 2, top), Size(w, h), CornerRadius(w * .2f))
     drawLine(Color(0xFF2E1E14), Offset(x, top), Offset(x, top - w * .4f), w * .15f)
@@ -220,7 +221,7 @@ private fun DrawScope.herbs(from: Float, to: Float, tick: Int) {
 
 private fun DrawScope.lantern(x: Float, y: Float, w: Float, h: Float, tick: Int) {
     drawLine(Color(0xFF3A2418), Offset(x + w / 2, y), Offset(x + w / 2, y + h * .4f), 2f)
-    val f = .9f + .1f * sin(tick * .7f)
+    val f = .96f + .04f * sin(tick * .09f)
     val c = Offset(x + w / 2, y + h * .62f)
     drawCircle(Brush.radialGradient(listOf(Color(0x77FFC46A), Color(0x00FFC46A)), c, w * 2.6f * f), w * 2.6f * f, c)
     drawRoundRect(Color(0xFF241610), Offset(x, y + h * .4f), Size(w, h * .45f), CornerRadius(w * .15f))

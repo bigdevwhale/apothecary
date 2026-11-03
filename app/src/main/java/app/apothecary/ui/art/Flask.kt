@@ -90,7 +90,7 @@ fun DrawScope.flask(shape: Int, x: Float, y: Float, w: Float, h: Float, color: C
     val bottom = y + h
     val murky = glow == Glow.MURKY
     val liquid = if (murky) lerp(color, C.murky, .7f) else color
-    val strength = when (glow) { Glow.BRIGHT -> .55f; Glow.SOON -> .4f; Glow.LAST -> .3f + .15f * sin((tick + seed) * .35f); Glow.MURKY -> 0f }
+    val strength = when (glow) { Glow.BRIGHT -> .55f; Glow.SOON -> .4f; Glow.LAST -> .32f + .1f * sin((tick + seed) * .12f); Glow.MURKY -> 0f }
     if (strength > 0f) {
         val c = Offset(x + w / 2, y + h * .7f)
         drawCircle(Brush.radialGradient(listOf(color.copy(alpha = strength), color.copy(alpha = 0f)), c, w * 1.05f), w * 1.05f, c)
