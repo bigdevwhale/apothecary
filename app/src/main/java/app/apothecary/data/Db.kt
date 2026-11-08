@@ -48,13 +48,13 @@ interface ShopDao {
     suspend fun lastJar(): Int?
 }
 
-@Database(entities = [Item::class, Brew::class], version = 2, exportSchema = true)
+@Database(entities = [Item::class, Brew::class], version = 3, exportSchema = true)
 abstract class ShopDb : RoomDatabase() {
     abstract fun dao(): ShopDao
 
     companion object {
         fun create(context: Context): ShopDb = Room.databaseBuilder(context, ShopDb::class.java, "apothecary.db")
-            .addMigrations(AMOUNTS)
+            .addMigrations(AMOUNTS, ESSENCES)
             .build()
 
         /** How much of an ingredient, and in what (#1). */
@@ -62,6 +62,14 @@ abstract class ShopDb : RoomDatabase() {
             override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE items ADD COLUMN amount REAL NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE items ADD COLUMN measure TEXT")
+            }
+        }
+
+        /** Essences of the owner's own (#2). */
+        private val ESSENCES = object : androidx.room.migration.Migration(2, 3) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE items ADD COLUMN essence TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE items ADD COLUMN essenceColor INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

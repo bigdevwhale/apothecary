@@ -56,6 +56,9 @@ data class Item(
     /** How much of it, in [measure]; 0 = not said. */
     val amount: Double = 0.0,
     val measure: Measure? = null,
+    /** An essence of the owner's own inside [cat] (#2): its name, and its flask colour as ARGB (0 = the parent's). */
+    val essence: String = "",
+    val essenceColor: Int = 0,
 )
 
 /** Units an amount can be given in (#1). */

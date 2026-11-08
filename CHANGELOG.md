@@ -6,6 +6,15 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
+## [1.2.0] - 2026-11-08
+
+### Added
+- Essences of your own: «+ your own» in the add sheet makes one with a name and a flask colour, as a kind of one of the built-in essences, which the potion recipes count it as (#2).
+
+<!-- tg
+Новое: свои эссенции – например, «Специи» или «Детское питание», со своим цветом склянки. Для рецептов зелий они считаются разновидностью выбранной эссенции.
+-->
+
 ## [1.1.0] - 2026-11-08
 
 ### Added

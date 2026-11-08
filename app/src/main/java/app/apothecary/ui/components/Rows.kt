@@ -63,7 +63,7 @@ fun IngredientRow(shop: Shop, i: Item, onClick: () -> Unit, modifier: Modifier =
         modifier.fillMaxWidth().clip(R8.Md).background(if (selected == true) C.amberSoft else C.surface).clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.width(36.dp), contentAlignment = Alignment.Center) { Flask(C.cat(i.cat), shop.potency(i), g, 46.dp, shapeOf(i.name), i.id.toInt()) }
+        Box(Modifier.width(36.dp), contentAlignment = Alignment.Center) { Flask(C.of(i), shop.potency(i), g, 46.dp, shapeOf(i.name), i.id.toInt()) }
         Column(Modifier.weight(1f)) {
             Text(i.name, style = T.Strong, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(itemLine(shop, i), style = T.Small, maxLines = 2, overflow = TextOverflow.Ellipsis)

@@ -44,6 +44,12 @@ object C {
     val glass = Color(0xFFE9DFC9)
 
     fun cat(c: Cat) = Color(0xFF000000 or c.color)
+
+    /** The flask colour of [i]: its own essence's, or its essence's. */
+    fun of(i: app.apothecary.data.Item) = if (i.essenceColor != 0) Color(i.essenceColor) else cat(i.cat)
+
+    /** Colours an own essence may take. */
+    val essences = listOf(0xFFD94F70, 0xFFE8833A, 0xFFF2C94C, 0xFF7CC26B, 0xFF3FB8A9, 0xFF4F8FC9, 0xFF7B6FD6, 0xFFB36AD1, 0xFF9A7B5B, 0xFF8A9499).map { it.toInt() }
 }
 
 /** Cormorant: the lettering of an old shop sign and a potion book. */

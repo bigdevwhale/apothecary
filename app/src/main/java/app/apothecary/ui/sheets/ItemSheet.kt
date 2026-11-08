@@ -52,10 +52,10 @@ fun ItemSheet(shop: Shop, i: Item, nav: Nav) {
     var sure by remember { mutableStateOf(false) }
     Sheet(onDismiss = nav::close) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Box(Modifier.padding(start = 6.dp)) { Flask(C.cat(i.cat), shop.potency(i), if (i.fate != null) Glow.MURKY else g, 110.dp, shapeOf(i.name), i.id.toInt()) }
+            Box(Modifier.padding(start = 6.dp)) { Flask(C.of(i), shop.potency(i), if (i.fate != null) Glow.MURKY else g, 110.dp, shapeOf(i.name), i.id.toInt()) }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(i.name, style = T.Title)
-                Text("${Words.cat(i.cat, ru)} · ${Words.place(i.place, ru).lowercase()}", style = T.Muted)
+                Text("${i.essence.ifBlank { Words.cat(i.cat, ru) }} · ${Words.place(i.place, ru).lowercase()}", style = T.Muted)
                 if (i.fate == null) Tag(Words.left(left, ru), glowColor(g))
                 else Tag(fate(i.fate, ru), C.surface2, ink = C.muted)
             }

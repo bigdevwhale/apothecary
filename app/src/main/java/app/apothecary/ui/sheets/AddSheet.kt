@@ -1,6 +1,10 @@
 package app.apothecary.ui.sheets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -73,6 +77,10 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
     var count by remember { mutableStateOf(edit?.left?.takeIf { it > 0 }?.toString() ?: "") }
     var amount by remember { mutableStateOf(edit?.amount?.takeIf { it > 0 }?.let { Words.amount(it) } ?: "") }
     var measure by remember { mutableStateOf(edit?.measure) }
+    var essence by remember { mutableStateOf(edit?.essence ?: "") }
+    var essenceColor by remember { mutableIntStateOf(edit?.essenceColor ?: 0) }
+    var newEssence by remember { mutableStateOf<String?>(null) }
+    var newColor by remember { mutableIntStateOf(C.essences.first()) }
     var iceDays by remember { mutableStateOf(edit?.iceDays) }
     var jar by remember { mutableIntStateOf(edit?.jar ?: 0) }
     var picking by remember { mutableStateOf<String?>(null) }
@@ -114,6 +122,8 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
                 perDay = perDay.toIntOrNull() ?: 0,
                 left = count.toIntOrNull() ?: 0,
                 amount = amount.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 } ?: 0.0,
+                essence = essence.trim(),
+                essenceColor = if (essence.isBlank()) 0 else essenceColor,
                 measure = if ((amount.replace(',', '.').toDoubleOrNull() ?: 0.0) > 0) (measure ?: Measure.PCS) else null,
                 courseFrom = if (perDay.toIntOrNull() != null && count.toIntOrNull() != null) (if (edit?.left == count.toIntOrNull() && edit?.perDay == perDay.toIntOrNull()) edit?.courseFrom ?: today else today) else null,
             )
@@ -133,7 +143,7 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
         if (kind != null && !details) {
             // Picked from the guide: everything is filled in, so show it in one line and keep the chips out of the way.
             Row(Modifier.fillMaxWidth().clip(R8.Md).background(C.surface2).padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(listOfNotNull(Words.cat(cat, ru), Words.place(place, ru).lowercase(),
+                Text(listOfNotNull(essence.ifBlank { Words.cat(cat, ru) }, Words.place(place, ru).lowercase(),
                     openDays.toIntOrNull()?.let { if (ru) "открытым ${Words.days(it.toLong(), true)}" else "${Words.days(it.toLong(), false)} open" }).joinToString(" · "),
                     style = T.Body, modifier = Modifier.weight(1f))
                 Chip(t("изменить", "change"), false, { details = true })
@@ -142,13 +152,43 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
         if (kind == null || details) {
         Section(t("Эссенция", "Essence"))
         Flow {
-            for (x in Cat.entries) Chip(Words.cat(x, ru), x == cat, {
-                cat = x; catSet = true
+            for (x in Cat.entries) Chip(Words.cat(x, ru), x == cat && essence.isBlank(), {
+                cat = x; catSet = true; essence = ""; essenceColor = 0
                 if (kind == null) {
                     place = if (edit == null || place0 == null) Lore.place(x) else place
                     if (!dateSet) printed = bought + Lore.keep(x)
                 }
             }, color = C.cat(x))
+            // The owner's own essences, each inside a built-in one that keeps its recipes (#2).
+            // The one just made isn't on any shelf yet, so it goes first.
+            val own = (listOfNotNull(Item(name = "", cat = cat, place = place, bought = today, essence = essence, essenceColor = essenceColor).takeIf { essence.isNotBlank() }) +
+                shop.items.filter { it.essence.isNotBlank() }).distinctBy { it.essence.lowercase() }
+            for (o in own) {
+                Chip(o.essence, essence.equals(o.essence, ignoreCase = true), {
+                    cat = o.cat; catSet = true; essence = o.essence; essenceColor = o.essenceColor
+                }, color = C.of(o))
+            }
+            Chip(t("+ своя", "+ your own"), false, { newEssence = "" })
+        }
+        newEssence?.let { ne ->
+            Note(
+                if (ru) "Своя эссенция – разновидность эссенции «${Words.cat(cat, ru)}». В рецептах зелий она идёт за неё." else "Your essence is a kind of “${Words.cat(cat, ru)}”, and potion recipes count it as one.",
+                t("Своя эссенция", "Your own essence"),
+            )
+            Field(ne, { newEssence = it.take(24) }, t("Название: специи, детское питание…", "Name: spices, baby food…"))
+            Flow {
+                for (col in C.essences) Box(
+                    Modifier.size(34.dp).clip(androidx.compose.foundation.shape.CircleShape).background(androidx.compose.ui.graphics.Color(col))
+                        .border(if (col == newColor) 3.dp else 0.dp, C.ink, androidx.compose.foundation.shape.CircleShape).clickable { newColor = col }
+                )
+            }
+            Flow {
+                Chip(t("Добавить", "Add"), true, {
+                    if (ne.isNotBlank()) { essence = ne.trim(); essenceColor = newColor; catSet = true }
+                    newEssence = null
+                })
+                Chip(t("Отмена", "Cancel"), false, { newEssence = null })
+            }
         }
 
         Section(t("Где хранится", "Kept in"))

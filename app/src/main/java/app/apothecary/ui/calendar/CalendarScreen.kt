@@ -93,7 +93,7 @@ fun CalendarScreen(shop: Shop, nav: Nav) {
                         Canvas(Modifier.fillMaxWidth().height(14.dp)) {
                             // Filled dots in the essence's colour: runs out that day. Amber rings: brewed. Red crosses: poured out.
                             val dots = buildList {
-                                for (i in due.take(4)) add(C.cat(i.cat) to 0)
+                                for (i in due.take(4)) add(C.of(i) to 0)
                                 if (past) {
                                     repeat(minOf(brewed[day]?.size ?: 0, 2)) { add(C.amber to 1) }
                                     repeat(minOf(tossed[day]?.size ?: 0, 2)) { add(C.rose to 2) }
