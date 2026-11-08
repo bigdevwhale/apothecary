@@ -63,6 +63,7 @@ fun ItemSheet(shop: Shop, i: Item, nav: Nav) {
         if (i.fate == null && left != null) Bar(shop.potency(i), Modifier.fillMaxWidth(), glowColor(g))
 
         Card {
+            if (i.amount > 0) Fact(t("Сколько", "How much"), Words.amount(i.amount) + " " + Words.measure(i.measure ?: app.apothecary.data.Measure.PCS, ru))
             Fact(t("Куплено", "Bought"), Words.date(i.bought, ru, year = true))
             i.printed?.let { Fact(t("Срок на упаковке", "Package date"), Words.date(it, ru, year = true)) }
             i.opened?.let { Fact(t("Вскрыто", "Opened"), Words.date(it, ru) + (i.openDays?.let { d -> if (ru) ", открытым годно ${Words.days(d.toLong(), true)}" else ", keeps ${Words.days(d.toLong(), false)} open" } ?: "")) }

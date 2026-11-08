@@ -48,11 +48,21 @@ interface ShopDao {
     suspend fun lastJar(): Int?
 }
 
-@Database(entities = [Item::class, Brew::class], version = 1, exportSchema = true)
+@Database(entities = [Item::class, Brew::class], version = 2, exportSchema = true)
 abstract class ShopDb : RoomDatabase() {
     abstract fun dao(): ShopDao
 
     companion object {
-        fun create(context: Context): ShopDb = Room.databaseBuilder(context, ShopDb::class.java, "apothecary.db").build()
+        fun create(context: Context): ShopDb = Room.databaseBuilder(context, ShopDb::class.java, "apothecary.db")
+            .addMigrations(AMOUNTS)
+            .build()
+
+        /** How much of an ingredient, and in what (#1). */
+        private val AMOUNTS = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE items ADD COLUMN amount REAL NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE items ADD COLUMN measure TEXT")
+            }
+        }
     }
 }

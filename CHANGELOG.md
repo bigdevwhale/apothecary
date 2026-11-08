@@ -6,6 +6,15 @@ line "<!-- tg", then 2-4 short lines in Russian for users (what is new, what is 
 then close it like any HTML comment. The release notes carry it, and the chat bot posts those lines.
 -->
 
+## [1.1.0] - 2026-11-08
+
+### Added
+- How much of it: an ingredient or a medicine can carry an amount in pieces, grams, kilograms, millilitres, litres, tablets or packs, shown on its card (#1).
+
+<!-- tg
+Новое: у продукта или лекарства можно указать количество – в штуках, граммах, килограммах, миллилитрах, литрах, таблетках или упаковках.
+-->
+
 ## [1.0.0]
 
 The first version.

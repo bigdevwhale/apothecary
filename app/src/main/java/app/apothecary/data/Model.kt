@@ -53,7 +53,13 @@ data class Item(
     val closed: Long? = null,
     val brew: Long? = null,
     val added: Long = System.currentTimeMillis(),
+    /** How much of it, in [measure]; 0 = not said. */
+    val amount: Double = 0.0,
+    val measure: Measure? = null,
 )
+
+/** Units an amount can be given in (#1). */
+enum class Measure { PCS, G, KG, ML, L, TABS, PACKS }
 
 /** A meal cooked from ingredients: in the shop it is a potion. */
 @Entity(tableName = "brews")

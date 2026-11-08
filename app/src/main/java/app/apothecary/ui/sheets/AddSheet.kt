@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import app.apothecary.container
 import app.apothecary.data.Cat
 import app.apothecary.data.Item
+import app.apothecary.data.Measure
 import app.apothecary.data.Need
 import app.apothecary.data.Place
 import app.apothecary.domain.Kind
@@ -70,6 +71,8 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
     var need by remember { mutableStateOf(edit?.need) }
     var perDay by remember { mutableStateOf(edit?.perDay?.takeIf { it > 0 }?.toString() ?: "") }
     var count by remember { mutableStateOf(edit?.left?.takeIf { it > 0 }?.toString() ?: "") }
+    var amount by remember { mutableStateOf(edit?.amount?.takeIf { it > 0 }?.let { Words.amount(it) } ?: "") }
+    var measure by remember { mutableStateOf(edit?.measure) }
     var iceDays by remember { mutableStateOf(edit?.iceDays) }
     var jar by remember { mutableIntStateOf(edit?.jar ?: 0) }
     var picking by remember { mutableStateOf<String?>(null) }
@@ -110,6 +113,8 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
                 need = if (cat == Cat.MEDS || cat == Cat.VITAMIN || place == Place.CABINET) need else null,
                 perDay = perDay.toIntOrNull() ?: 0,
                 left = count.toIntOrNull() ?: 0,
+                amount = amount.replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 } ?: 0.0,
+                measure = if ((amount.replace(',', '.').toDoubleOrNull() ?: 0.0) > 0) (measure ?: Measure.PCS) else null,
                 courseFrom = if (perDay.toIntOrNull() != null && count.toIntOrNull() != null) (if (edit?.left == count.toIntOrNull() && edit?.perDay == perDay.toIntOrNull()) edit?.courseFrom ?: today else today) else null,
             )
             c.write { if (edit == null) clerk.add(item) else clerk.save(item) }
@@ -195,6 +200,12 @@ fun AddSheet(shop: Shop, edit: Item?, place0: Place?, nav: Nav) {
                 Field(perDay, { s -> perDay = s.filter { it.isDigit() }.take(2) }, t("в день", "a day"), Modifier.weight(1f), number = true)
                 Field(count, { s -> count = s.filter { it.isDigit() }.take(4) }, t("штук в банке", "in the jar"), Modifier.weight(1f), number = true)
             }
+        }
+
+        Section(t("Сколько, по желанию", "How much, optional"))
+        Field(amount, { s -> amount = s.filter { it.isDigit() || it == ',' || it == '.' }.take(7) }, t("например, 500", "e.g. 500"), number = true)
+        Flow {
+            for (m in Measure.entries) Chip(Words.measure(m, ru), (measure ?: Measure.PCS) == m, { measure = m })
         }
 
         Section(t("Цена, по желанию", "Price, optional"))

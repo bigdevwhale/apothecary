@@ -7,6 +7,20 @@ import java.time.LocalDate
 
 /** Names and phrases in both languages: Russian first, English second. */
 object Words {
+    /** Short unit names, as written after a number. */
+    fun measure(m: app.apothecary.data.Measure, ru: Boolean) = when (m) {
+        app.apothecary.data.Measure.PCS -> if (ru) "шт." else "pcs"
+        app.apothecary.data.Measure.G -> if (ru) "г" else "g"
+        app.apothecary.data.Measure.KG -> if (ru) "кг" else "kg"
+        app.apothecary.data.Measure.ML -> if (ru) "мл" else "ml"
+        app.apothecary.data.Measure.L -> if (ru) "л" else "l"
+        app.apothecary.data.Measure.TABS -> if (ru) "табл." else "tabs"
+        app.apothecary.data.Measure.PACKS -> if (ru) "уп." else "packs"
+    }
+
+    /** 2 → "2", 1.5 → "1.5", with no trailing zeros. */
+    fun amount(x: Double): String = if (x == Math.floor(x)) x.toLong().toString() else java.math.BigDecimal(x).setScale(2, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
+
     fun cat(c: Cat, ru: Boolean) = when (c) {
         Cat.DAIRY -> if (ru) "молочное" else "dairy"
         Cat.CHEESE -> if (ru) "сыр" else "cheese"
